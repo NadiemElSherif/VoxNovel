@@ -141,6 +141,30 @@ Once deployed, access the VoxNovel web interface at:
 - **Direct**: `http://your-server-ip:8080`
 - **With Nginx**: `http://your-domain.com`
 
+The web interface provides:
+- **File Upload**: Drag-and-drop or click to upload ebook files
+- **Processing Options**: Select TTS model, GPU acceleration, chapter delimiters
+- **Real-time Status**: Monitor processing progress with live updates
+- **Download Management**: Access completed audiobooks and job history
+- **Mobile Friendly**: Works on tablets and mobile devices
+
+### Alternative Launch Methods
+
+If you prefer to launch the web interface directly:
+
+```bash
+# Method 1: Use the web launcher (recommended)
+python start_web_gui.py
+
+# Method 2: Use the web GUI script directly
+python gui_run_web.py
+
+# Method 3: Force web mode with environment variable
+VOXNOVEL_WEB_MODE=1 python gui_run.py
+```
+
+The original `gui_run.py` now automatically detects headless environments (like Docker) and launches the web interface automatically.
+
 ### Processing Books
 
 1. **Upload**: Drag and drop or select an ebook file

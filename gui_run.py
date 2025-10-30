@@ -1,8 +1,66 @@
 
-#This will download the booknlp files using my huggingface backup     
-import download_missing_booknlp_models 
+#This will download the booknlp files using my huggingface backup
+import download_missing_booknlp_models
+import os
+import sys
+import subprocess
 
-print("Starting...")
+print("Starting VoxNovel...")
+
+# Check if we're in a headless/Docker environment and launch web interface instead
+def is_headless_environment():
+    """Check if we're running in a headless environment"""
+    # Check DISPLAY environment variable
+    if not os.environ.get('DISPLAY'):
+        return True
+
+    # Check if we're in Docker
+    if os.path.exists('/.dockerenv'):
+        return True
+
+    # Try to detect if X11 is available
+    try:
+        import subprocess
+        result = subprocess.run(['xset', 'q'], capture_output=True, timeout=2)
+        if result.returncode != 0:
+            return True
+    except:
+        return True
+
+    return False
+
+def launch_web_interface():
+    """Launch the web interface"""
+    print("🌐 Headless environment detected - launching web interface...")
+    print("=" * 50)
+
+    # Check if web interface files exist
+    web_script = os.path.join(os.path.dirname(__file__), 'gui_run_web.py')
+    if os.path.exists(web_script):
+        try:
+            print("🚀 Starting VoxNovel Web Interface...")
+            subprocess.run([sys.executable, web_script])
+        except KeyboardInterrupt:
+            print("\n👋 VoxNovel Web Interface stopped")
+        except Exception as e:
+            print(f"❌ Error starting web interface: {e}")
+            print("Falling back to headless mode...")
+            # Fall back to headless_voxnovel.py
+            headless_script = os.path.join(os.path.dirname(__file__), 'headless_voxnovel.py')
+            if os.path.exists(headless_script):
+                subprocess.run([sys.executable, headless_script])
+    else:
+        print("❌ Web interface not found, falling back to headless mode...")
+        headless_script = os.path.join(os.path.dirname(__file__), 'headless_voxnovel.py')
+        if os.path.exists(headless_script):
+            subprocess.run([sys.executable, headless_script])
+
+# Check environment and launch appropriate interface
+if is_headless_environment():
+    launch_web_interface()
+    sys.exit(0)
+
+print("🖥️ Desktop environment detected - launching GUI...")
 
 #this is code that will be used to turn numbers like 1,000 and in a txt file into 1000 go then booknlp doesnt make it weird and then when the numbers are generated it comes out fine
 import re
