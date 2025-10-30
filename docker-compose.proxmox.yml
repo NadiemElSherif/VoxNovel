@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  voxnovel:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxmox
+    container_name: voxnovel-web
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/output_audiobooks:/app/output_audiobooks
+      - ./data/Working_files:/app/Working_files
+      - ./data/Final_combined_output_audio:/app/Final_combined_output_audio
+      - ./data/tortoise:/app/tortoise
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - voxnovel-network
+
+  # Optional: Nginx reverse proxy for SSL termination and better performance
+  nginx:
+    image: nginx:alpine
+    container_name: voxnovel-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - voxnovel
+    restart: unless-stopped
+    networks:
+      - voxnovel-network
+
+networks:
+  voxnovel-network:
+    driver: bridge
+
+volumes:
+  voxnovel-uploads:
+  voxnovel-output:
+  voxnovel-working:

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxNovel Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        .upload-section {
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            border-color: #5e72e4;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #5e72e4;
+            background: #e8f0ff;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #5e72e4;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .options-section {
+            margin-bottom: 30px;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .option-group select,
+        .option-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .option-group select:focus,
+        .option-group input:focus {
+            outline: none;
+            border-color: #5e72e4;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .status-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .status-indicator.processing {
+            background: #ffc107;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #5e72e4, #825ee4);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .status-message {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .supported-formats {
+            background: #e8f4fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .supported-formats h3 {
+            color: #0066cc;
+            margin-bottom: 10px;
+        }
+
+        .formats-list {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 VoxNovel</h1>
+            <p>Transform your books into multi-voice audiobooks</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📚</div>
+                    <h2>Upload your book</h2>
+                    <p>Drag and drop your ebook file here or click to browse</p>
+                    <input type="file" id="fileInput" class="file-input" accept=".epub,.pdf,.mobi,.txt,.html,.rtf,.fb2,.odt,.cbr,.cbz">
+                    <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                </div>
+            </div>
+
+            <div class="options-section">
+                <h3>Processing Options</h3>
+
+                <div class="option-group">
+                    <label for="ttsModel">TTS Model:</label>
+                    <select id="ttsModel" name="tts_model">
+                        <option value="xtts_v2">XTTS V2 (High Quality)</option>
+                        <option value="tortoise">Tortoise (Very High Quality)</option>
+                        <option value="styletts2">StyleTTS2 (Fast)</option>
+                    </select>
+                </div>
+
+                <div class="option-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="useGpu" name="use_gpu" checked>
+                        <label for="useGpu">Use GPU acceleration (if available)</label>
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <label for="chapterDelimiter">Chapter Delimiter:</label>
+                    <input type="text" id="chapterDelimiter" name="chapter_delimiter" value="Chapter" placeholder="Text that identifies chapters">
+                </div>
+
+                <div class="option-group">
+                    <label for="silenceDuration">Silence Duration (ms):</label>
+                    <input type="number" id="silenceDuration" name="silence_duration" value="500" min="0" max="5000" step="100">
+                </div>
+            </div>
+
+            <div class="status-section">
+                <div class="status-header">
+                    <div class="status-title">Status</div>
+                    <div class="status-indicator" id="statusIndicator"></div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="status-message" id="statusMessage">
+                    Ready to process books
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="processButton" onclick="processBook()" disabled>
+                        Process Book
+                    </button>
+                    <a href="/jobs" class="btn btn-secondary">View Completed Jobs</a>
+                </div>
+            </div>
+
+            <div class="supported-formats">
+                <h3>Supported Formats</h3>
+                <div class="formats-list">
+                    EPUB, PDF, MOBI, TXT, HTML, RTF, FB2, ODT, CBR, CBZ
+                    <br><small>Best results with EPUB or MOBI for automatic chapter detection</small>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processButton = document.getElementById('processButton');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            document.querySelector('.upload-area h2').textContent = `Selected: ${file.name}`;
+            document.querySelector('.upload-area p').textContent = `Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+            processButton.disabled = false;
+        }
+
+        function processBook() {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('tts_model', document.getElementById('ttsModel').value);
+            formData.append('use_gpu', document.getElementById('useGpu').checked);
+            formData.append('chapter_delimiter', document.getElementById('chapterDelimiter').value);
+            formData.append('silence_duration', document.getElementById('silenceDuration').value);
+
+            processButton.disabled = true;
+            updateStatus('processing', 'Uploading and starting processing...', 0);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    updateStatus('error', data.error, 0);
+                    processButton.disabled = false;
+                } else {
+                    updateStatus('processing', data.message, 10);
+                    startStatusPolling();
+                }
+            })
+            .catch(error => {
+                updateStatus('error', `Upload failed: ${error.message}`, 0);
+                processButton.disabled = false;
+            });
+        }
+
+        function updateStatus(status, message, progress) {
+            const indicator = document.getElementById('statusIndicator');
+            const progressFill = document.getElementById('progressFill');
+            const statusMessage = document.getElementById('statusMessage');
+
+            indicator.className = `status-indicator ${status}`;
+            progressFill.style.width = `${progress}%`;
+            statusMessage.textContent = message;
+
+            if (status === 'completed' && jobStatus.output_file) {
+                statusMessage.innerHTML += `<br><a href="/download/${jobStatus.output_file}" class="btn btn-primary">Download Audiobook</a>`;
+            }
+        }
+
+        let jobStatus = {};
+        function startStatusPolling() {
+            const interval = setInterval(() => {
+                fetch('/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        jobStatus = data;
+                        updateStatus(data.status, data.message, data.progress);
+
+                        if (data.status === 'completed' || data.status === 'error') {
+                            clearInterval(interval);
+                            if (data.status === 'error') {
+                                processButton.disabled = false;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Status polling error:', error);
+                    });
+            }, 2000);
+        }
+
+        // Initial status check
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.voxnovel_available) {
+                    updateStatus('error', 'VoxNovel modules not available - check server configuration', 0);
+                }
+            });
+    </script>
+</body>
+</html>

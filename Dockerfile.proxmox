@@ -1,0 +1,78 @@
+# Optimized Dockerfile for Proxmox/Debian deployment
+FROM python:3.10-slim-bullseye
+
+# Set non-interactive installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    calibre \
+    espeak \
+    espeak-ng \
+    libsndfile1 \
+    libsox-fmt-all \
+    sox \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust for certain Python packages
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better Docker layer caching
+COPY Ubuntu_requirements.txt web-requirements.txt /app/
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install web interface dependencies first
+RUN pip install --no-cache-dir -r web-requirements.txt
+
+# Install core VoxNovel dependencies
+RUN pip install --no-cache-dir \
+    booknlp==1.0.7.1 \
+    tts==0.21.3 \
+    styletts2 \
+    spacy && \
+    python -m spacy download en_core_web_sm
+
+# Install remaining dependencies
+RUN pip install --no-cache-dir -r Ubuntu_requirements.txt
+
+# Install optional dependencies for non-Latin languages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    mecab \
+    libmecab-dev \
+    mecab-ipadic-utf8 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir unidic mecab-python3 && \
+    python -m unidic download
+
+# Create necessary directories
+RUN mkdir -p /app/Working_files /app/output_audiobooks /app/Final_combined_output_audio /app/tortoise
+
+# Copy application files
+COPY . /app/
+
+# Create a simple web server directory
+RUN mkdir -p /app/web_interface/static /app/web_interface/templates
+
+# Set permissions
+RUN chmod +x /app/*.py
+
+# Expose port for web interface
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default command for web interface
+CMD ["python", "web_server.py"]
